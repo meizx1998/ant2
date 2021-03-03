@@ -9,12 +9,14 @@ class Clinik extends Component {
   state = {
     clinics: [],
     oname: "",
+    sname:"",
+    hname:"",
   }
 
   componentDidMount() {
     let record = this.props.location.state.record;
-    let clinics = getClinics(record.hid, record.oid, record.sid);
-    this.setState({oname: record.oname,})
+    let clinics = getClinics(record.hid, record.sid, record.oid,);
+    this.setState({sname:record.sname,oname:record.oname,hname:record.hname})
     clinics.then((res) => {
       res.forEach(r => {
         r.key = r.cid;
@@ -63,7 +65,7 @@ class Clinik extends Component {
           onBack={() => {
             history.goBack()
           }}
-          title={`${this.state.oname}`}
+          title={`${this.state.hname}-${this.state.sname}-${this.state.oname}`}
           subTitle={"诊室详情"}
         >
           <Row>
