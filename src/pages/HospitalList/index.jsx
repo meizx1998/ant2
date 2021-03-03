@@ -3,6 +3,7 @@ import {Table, Input, Button, Modal, Form, Select, message, Tag, Space, Popconfi
 import {getHospitalList, addHospital, deletehospital, updateHospitai} from "@/pages/HospitalList/service";
 import {CompassOutlined, PhoneOutlined} from "@ant-design/icons";
 import SmileOutlined from "@ant-design/icons/SmileOutlined";
+import {history} from "@/.umi/core/history";
 
 
 const {Option} = Select;
@@ -92,7 +93,7 @@ class HospItalList extends Component {
       if (h.id === validateFields.id) {
         h = validateFields;
       }
-      ;
+
       return h;
     });
     message.success("修改成功")
@@ -168,6 +169,7 @@ class HospItalList extends Component {
             >
               <Button type="primary" danger>删除</Button>
             </Popconfirm>
+            <Button onClick={event => {history.push(`/Hospitallist/HospitalSpecial/${record.id}`)}}>查看医院详情</Button>
 
           </Space>
         ),

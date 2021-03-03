@@ -216,7 +216,7 @@ class SpecialList extends Component {
         </div>
 
         <hr/>
-        <Table dataSource={this.state.specialList} columns={columns}/>
+        <Table  dataSource={this.state.specialList} pagination={{defaultPageSize:5}} columns={columns}/>
       </div>
     );
 

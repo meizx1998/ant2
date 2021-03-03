@@ -1,13 +1,15 @@
 import React, {Component} from 'react';
-import {Button, Card, Col, Image, Row, message,Divider, Empty, Modal, Form, Input, Upload} from 'antd';
-import {addOutPatient, getOutPaitentsBySepcId} from "@/pages/SpecialList/service";
+import {Button, Card, Col, Image, Row, message, Divider, Empty, Modal, Form, Input, Upload, Popconfirm} from 'antd';
+import {addOutPatient, deleteOutPatient, getOutPaitentsBySepcId} from "@/pages/SpecialList/service";
 import {history} from 'umi'
-import {LoadingOutlined, PlusOutlined} from "@ant-design/icons";
+import {DeleteTwoTone, LoadingOutlined, PlusOutlined} from "@ant-design/icons";
+
 function getBase64(img, callback) {
   const reader = new FileReader();
   reader.addEventListener('load', () => callback(reader.result));
   reader.readAsDataURL(img);
 }
+
 const style = {background: '#0092ff', padding: '8px 0'};
 const layout = {
   labelCol: {span: 8},
@@ -22,9 +24,19 @@ class OutPaitents extends Component {
     loading: false,
   }
 
+  confirm = (id) => {
+    deleteOutPatient(id);
+    let filter = this.state.OutPaitents.filter(e=>{
+      return e.id!==id;
+    });
+    this.setState({OutPaitents:filter});
+  }
+
+
+
   handleChange = info => {
     if (info.file.status === 'uploading') {
-      this.setState({ loading: true });
+      this.setState({loading: true});
       return;
     }
     if (info.file.status === 'done') {
@@ -40,7 +52,7 @@ class OutPaitents extends Component {
 
   constructor(props) {
     super(props);
-   this.addForm = React.createRef();
+    this.addForm = React.createRef();
   }
 
   componentDidMount() {
@@ -60,55 +72,89 @@ class OutPaitents extends Component {
   handleAddOk = async () => {
     let fileds = await this.addForm.current.validateFields();
     console.log(fileds);
-    fileds.special_id=this.props.match.params[0];
-    let NewSpecial={"image":fileds.image.file.response,name:fileds.name,special_id:fileds.special_id};
+    fileds.special_id = this.props.match.params[0];
+    let NewSpecial = {"image": fileds.image.file.response, name: fileds.name, special_id: fileds.special_id};
     console.log(NewSpecial);
-    addOutPatient(NewSpecial).then((success)=>{
+    addOutPatient(NewSpecial).then((success) => {
       message.success("添加成功");
+      let outPaitentsBySepcId = getOutPaitentsBySepcId(this.props.match.params[0]);
+      outPaitentsBySepcId.then(res => {
+        res.forEach(e => {
+          e.key = e.id;
+        })
+        this.setState({OutPaitents: res, isAddTableShow: false})
+        console.log(res);
+      }).catch((reason => (
+        this.setState({isAddTableShow: false})
+      )))
     });
-    let outPaitentsBySepcId = getOutPaitentsBySepcId(this.props.match.params[0]);
-    outPaitentsBySepcId.then(res => {
-      res.forEach(e => {
-        e.key = e.id;
-      })
-      this.setState({OutPaitents: res,isAddTableShow: false})
-      console.log(res);
-    }).catch((reason => (
-      this.setState({isAddTableShow: false})
-    )))
-
 
 
   }
   handleAddCancel = () => {
-    this.setState({isAddTableShow:false});
+    this.setState({isAddTableShow: false});
   }
 
   render() {
-    const { loading, imageUrl } = this.state;
+    const {loading, imageUrl} = this.state;
     const uploadButton = (
       <div>
-        {loading ? <LoadingOutlined /> : <PlusOutlined />}
-        <div style={{ marginTop: 8 }}>Upload</div>
+        {loading ? <LoadingOutlined/> : <PlusOutlined/>}
+        <div style={{marginTop: 8}}>Upload</div>
       </div>
     );
     const OutPatients = this.state.OutPaitents;
 
     if (OutPatients.length === 0) {
       return (
-        <Empty className="emptyIndex"
-               image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-               imageStyle={{
-                 height: 260,
-               }}
-               description={
-                 <span>
+        <div>
+          <Empty className="emptyIndex"
+                 image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                 imageStyle={{
+                   height: 260,
+                 }}
+                 description={
+                   <span>
         该专科下暂无门诊
       </span>
-               }
-        >
-          <Button type="primary" onClick={}>立即添加</Button>
-        </Empty>
+                 }
+          >
+            <Button type="primary" onClick={event => {
+              this.setState({isAddTableShow: true})
+            }}>立即添加</Button>
+          </Empty>
+          <Modal
+            title="新增门诊"
+            visible={this.state.isAddTableShow}
+            onOk={this.handleAddOk}
+            onCancel={this.handleAddCancel}
+            forceRender={true}
+          >
+            <Form  {...layout}
+                   ref={this.addForm}
+            >
+              <Form.Item name='name' label="门诊名称" rules={[{required: true}]}>
+                <Input/>
+              </Form.Item>
+
+              <Form.Item name='image' label="门诊图片" rules={[{required: false}]}>
+                <Upload
+                  name="file"
+                  listType="picture-card"
+                  className="avatar-uploader"
+                  showUploadList={false}
+                  action="http://192.168.192.133:8182/upload/image"
+                  onChange={this.handleChange}
+                >
+                  {imageUrl ? <img src={imageUrl} alt="avatar" style={{width: '100%'}}/> : uploadButton}
+                </Upload>
+              </Form.Item>
+
+            </Form>
+          </Modal>
+        </div>
+
+
       );
     } else return (
 
@@ -125,8 +171,23 @@ class OutPaitents extends Component {
               return (
                 <Col className="gutter-row" span={6} key={e.id}>
                   <Card cover={<img style={{padding: 20}} alt="example"
-                                    src={e.image==null?"https://dss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=1190152690,415337543&fm=26&gp=0.jpg":e.image}/>}
-                        title="" extra={<a href="#">查看相应医院</a>} style={{width: 200}}>
+                                    src={e.image == null ? "https://dss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=1190152690,415337543&fm=26&gp=0.jpg" : e.image}/>}
+                        title="" extra={<a href="#">查看相应医院</a>}
+                        actions={[
+                          <Popconfirm
+                            title="你确定删除这条记录"
+                            onConfirm={y => {
+                              this.confirm(e.id)
+                            }}
+                            onCancel={this.cancel}
+                            okText="是的"
+                            cancelText="不是"
+                          >
+                            <DeleteTwoTone key="delete"/>
+                          </Popconfirm>,
+                        ]}
+
+                        style={{width: 200}}>
                     <p style={{textAlign: "center"}}>{e.name}</p>
                   </Card>
                   <br/>
@@ -139,7 +200,7 @@ class OutPaitents extends Component {
 
           <Col className="gutter-row" span={6}>
             <Card hoverable onClick={event => {
-              this.setState({isAddTableShow:true})
+              this.setState({isAddTableShow: true})
             }} cover={<PlusOutlined style={{height: 150, color: 'gray', fontSize: 100}}/>}
                   title="" style={{width: 200, height: 200}}>
               <p>新增门诊</p>
@@ -162,7 +223,7 @@ class OutPaitents extends Component {
               <Input/>
             </Form.Item>
 
-            <Form.Item   name='image' label="门诊图片" rules={[{required: false}]} >
+            <Form.Item name='image' label="门诊图片" rules={[{required: false}]}>
               <Upload
                 name="file"
                 listType="picture-card"
@@ -171,7 +232,7 @@ class OutPaitents extends Component {
                 action="http://192.168.192.133:8182/upload/image"
                 onChange={this.handleChange}
               >
-                {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+                {imageUrl ? <img src={imageUrl} alt="avatar" style={{width: '100%'}}/> : uploadButton}
               </Upload>
             </Form.Item>
 

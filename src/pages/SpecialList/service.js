@@ -35,3 +35,7 @@ export async function getOutPaitentsBySepcId(id){
 export async function addOutPatient(outpatient){
   return request.post(prefx+'/api/item/outpatient/add',{data:outpatient,requestType:'form'})
 }
+
+export async function deleteOutPatient(id){
+  return request.post(prefx+`/api/item/outpatient/delete/${id}`)
+}

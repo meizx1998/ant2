@@ -62,12 +62,27 @@ export default [
                 component: './SpecialList',
               },
               {
-                name:'outpatients',
+
                 hideInMenu:true,
                 path: '/SpecialList/OutPaitents/*',
                 component: './SpecialList/OutPaitents'
               },
+              {
 
+                hideInMenu:true,
+                path: '/Hospitallist/HospitalSpecial/*',
+                component: './HospitalList/HospitalSpecial'
+              },
+              {
+                hideInMenu: true,
+                path: '/HospitalOutPatient',
+                component: './HospitalList/HospitalSpecial/HospitalOutPatient'
+              },
+              {
+                hideInMenu: true,
+                path: '/Clinik',
+                component: './HospitalList/HospitalSpecial/HospitalOutPatient/Clinik'
+              },
               {
                 component: './404',
               },
